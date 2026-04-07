@@ -1,0 +1,15 @@
+# Environment
+.env
+
+# Build artefacts
+backend/build/
+backend/node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

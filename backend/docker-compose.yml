@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: tictactoe-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       nakama
+      POSTGRES_USER:     nakama
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nakama"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nakama:
+    image: heroiclabs/nakama:3.22.0
+    container_name: tictactoe-nakama
+    restart: unless-stopped
+    entrypoint:
+      - "/bin/sh"
+      - "-ecx"
+      - >
+        /nakama/nakama migrate up
+          --database.address nakama:${POSTGRES_PASSWORD:-localdev}@postgres:5432/nakama &&
+        exec /nakama/nakama
+          --name nakama1
+          --database.address nakama:${POSTGRES_PASSWORD:-localdev}@postgres:5432/nakama
+          --socket.server_key ${SERVER_KEY:-defaultkey}
+          --runtime.path /backend/build
+          --logger.level ${LOG_LEVEL:-INFO}
+          --session.token_expiry_sec ${SESSION_EXPIRY:-86400}
+    environment:
+      # These are forwarded into ctx.env inside the TypeScript runtime
+      - TICK_RATE=${TICK_RATE:-1}
+      - TURN_TIMEOUT_SEC=${TURN_TIMEOUT_SEC:-30}
+      - DEFAULT_MODE=${DEFAULT_MODE:-classic}
+      - LEADERBOARD_TOP_N=${LEADERBOARD_TOP_N:-10}
+      - TIMED_MODE_ENABLED=${TIMED_MODE_ENABLED:-true}
+      - LEADERBOARD_ENABLED=${LEADERBOARD_ENABLED:-true}
+      - MATCH_HISTORY_ENABLED=${MATCH_HISTORY_ENABLED:-true}
+      - ANALYTICS_ENABLED=${ANALYTICS_ENABLED:-false}
+    ports:
+      - "7349:7349"   # HTTP API
+      - "7350:7350"   # gRPC API
+      - "7351:7351"   # Developer console
+    volumes:
+      - ./backend/build:/backend/build:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local

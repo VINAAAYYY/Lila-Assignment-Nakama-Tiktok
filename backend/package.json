@@ -1,0 +1,14 @@
+{
+  "name": "nakama-tictactoe-backend",
+  "version": "1.0.0",
+  "description": "Multiplayer Tic-Tac-Toe Nakama Backend",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "nakama-runtime": "github:heroiclabs/nakama-common",
+    "typescript": "^5.4.5"
+  }
+}
