@@ -3,16 +3,20 @@ import { MessageSerializer }              from "../utils/MessageSerializer";
 
 
 export class Broadcaster {
-  constructor(private readonly dispatcher: nkruntime.MatchDispatcher) {}
+  constructor(
+    private readonly nk: nkruntime.Nakama,
+    private readonly dispatcher: nkruntime.MatchDispatcher
+  ) {}
 
 
   toAll(opCode: MessageOpCode, message: OutboundMessage): void {
+    this.nk.stringToBinary(JSON.stringify(message));
     this.dispatcher.broadcastMessage(
       opCode,
-      MessageSerializer.encode(message),
-      null,
+      this.nk.stringToBinary(MessageSerializer.encode(message)),
       null,
       true,
+      null,
     );
   }
 
@@ -24,10 +28,10 @@ export class Broadcaster {
   ): void {
     this.dispatcher.broadcastMessage(
       opCode,
-      MessageSerializer.encode(message),
+      this.nk.stringToBinary(MessageSerializer.encode(message)),
       [presence],
-      null,
       true,
+      null,
     );
   }
 

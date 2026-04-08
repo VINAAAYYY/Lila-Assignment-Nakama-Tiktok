@@ -73,7 +73,7 @@ export class MatchHandler {
     cfg:       AppConfig,
   ): { state: MatchState } {
     const log         = new Logger(logger, "MatchHandler.join");
-    const broadcaster = new Broadcaster(disp);
+    const broadcaster = new Broadcaster(_nk, disp);
     const session     = GameSession.fromSnapshot(rawState, cfg);
 
     for (const presence of presences) {
@@ -85,14 +85,23 @@ export class MatchHandler {
       const firstId = session.start();
       log.info("Match started firstTurn=%s", firstId);
       broadcaster.updateLabel({ mode: session.mode, open: false } satisfies MatchLabel);
-      broadcaster.toAll(MessageOpCode.GameStart, {
-        type:         "game_start",
+      
+      const startMsg = {
+        type:         "game_start" as const,
         board:        session.boardSnapshot,
         marks:        session.marksRecord(),
         turn:         session.turn,
         mode:         session.mode,
         turnDeadline: session.deadline,
-      });
+      };
+
+      // Broadcast to all (includes existing players)
+      broadcaster.toAll(MessageOpCode.GameStart, startMsg);
+      
+      // Explicitly send to newcomers because they might not be part of the broadcast list yet
+      for (const p of presences) {
+        broadcaster.toOne(MessageOpCode.GameStart, startMsg, p);
+      }
     }
 
     return { state: session.toMatchState() };
@@ -113,7 +122,7 @@ export class MatchHandler {
     analytics: IAnalyticsAdapter,
   ): { state: MatchState } {
     const log         = new Logger(logger, "MatchHandler.leave");
-    const broadcaster = new Broadcaster(disp);
+    const broadcaster = new Broadcaster(nk, disp);
     const session     = GameSession.fromSnapshot(rawState, cfg);
 
     for (const presence of presences) {
@@ -130,7 +139,7 @@ export class MatchHandler {
         if (winnerId) {
           MatchHandler.postGame(
             nk, log, cfg, storage, analytics,
-            ctx.matchId, winnerId, presence.userId,
+            ctx.matchId!, winnerId, presence.userId,
             session.boardSnapshot, session.mode, GameOverReason.OpponentLeft,
           );
         }
@@ -158,7 +167,7 @@ export class MatchHandler {
     if (rawState.gameOver) return null;
 
     const log         = new Logger(logger, "MatchHandler.loop");
-    const broadcaster = new Broadcaster(disp);
+    const broadcaster = new Broadcaster(nk, disp);
     const session     = GameSession.fromSnapshot(rawState, cfg);
 
 
@@ -174,7 +183,7 @@ export class MatchHandler {
         const loserId = [...session.players.keys()].find(id => id !== timeout.winner) ?? "";
         MatchHandler.postGame(
           nk, log, cfg, storage, analytics,
-          ctx.matchId, timeout.winner, loserId,
+          ctx.matchId!, timeout.winner, loserId,
           timeout.board.snapshot(), session.mode, GameOverReason.Timeout,
         );
       }
@@ -186,7 +195,7 @@ export class MatchHandler {
       if (session.isOver) break;
       if (msg.opCode !== MessageOpCode.MakeMove) continue;
 
-      const payload = MessageSerializer.decodeInbound<MakeMovePayload>(msg.data, nk);
+      const payload = MessageSerializer.decodeInbound<MakeMovePayload>(new Uint8Array(msg.data), nk);
 
       if (!MessageSerializer.isMakeMovePayload(payload)) {
         broadcaster.toOne(MessageOpCode.Error, {
@@ -216,7 +225,7 @@ export class MatchHandler {
           const loserId = [...session.players.keys()].find(id => id !== outcome.winner) ?? "";
           MatchHandler.postGame(
             nk, log, cfg, storage, analytics,
-            ctx.matchId, outcome.winner, loserId,
+            ctx.matchId!, outcome.winner, loserId,
             outcome.board.snapshot(), session.mode, outcome.reason,
           );
         }

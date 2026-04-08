@@ -2,8 +2,8 @@
 .env
 
 # Build artefacts
-backend/build/
-backend/node_modules/
+**/build/
+**/node_modules/
 
 # Editor
 .vscode/

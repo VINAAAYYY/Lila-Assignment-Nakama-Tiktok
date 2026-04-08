@@ -15,10 +15,10 @@ export class MatchHandlerFactory {
 
     return {
       matchInit: (ctx, logger, nk, params) =>
-        MatchHandler.init(ctx, logger, nk, params, cfg),
+        MatchHandler.init(ctx, logger, nk, params as Record<string, string>, cfg),
 
       matchJoinAttempt: (ctx, logger, nk, dispatcher, tick, state, presence, metadata) =>
-        MatchHandler.joinAttempt(ctx, logger, nk, dispatcher, tick, state, presence, metadata),
+        MatchHandler.joinAttempt(ctx, logger, nk, dispatcher, tick, state, presence, metadata as Record<string, string>),
 
       matchJoin: (ctx, logger, nk, dispatcher, tick, state, presences) =>
         MatchHandler.join(ctx, logger, nk, dispatcher, tick, state, presences, cfg),
@@ -27,7 +27,7 @@ export class MatchHandlerFactory {
         MatchHandler.leave(ctx, logger, nk, dispatcher, tick, state, presences, cfg, storage, analytics),
 
       matchLoop: (ctx, logger, nk, dispatcher, tick, state, messages) =>
-        MatchHandler.loop(ctx, logger, nk, dispatcher, tick, state, messages, cfg, storage, analytics),
+        MatchHandler.loop(ctx, logger, nk, dispatcher, tick, state, messages, cfg, storage, analytics) ?? { state },
 
       matchTerminate: (ctx, logger, nk, dispatcher, tick, state, graceSeconds) =>
         MatchHandler.terminate(ctx, logger, nk, dispatcher, tick, state, graceSeconds),

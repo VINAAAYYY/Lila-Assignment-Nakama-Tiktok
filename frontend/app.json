@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Nakama Tic-Tac-Toe",
+    "slug": "nakama-tictactoe-frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"],
+
+    "ios": {
+      "supportsTablet": true
+    },
+
+    "android": {
+      "usesCleartextTraffic": true
+    },
+
+    "web": {}
+  }
+}
