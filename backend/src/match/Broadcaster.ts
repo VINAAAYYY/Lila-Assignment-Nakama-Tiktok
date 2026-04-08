@@ -10,14 +10,8 @@ export class Broadcaster {
 
 
   toAll(opCode: MessageOpCode, message: OutboundMessage): void {
-    this.nk.stringToBinary(JSON.stringify(message));
-    this.dispatcher.broadcastMessage(
-      opCode,
-      this.nk.stringToBinary(MessageSerializer.encode(message)),
-      null,
-      true,
-      null,
-    );
+    const data = this.nk.stringToBinary(MessageSerializer.encode(message));
+    this.dispatcher.broadcastMessage(opCode, data, null, true, null);
   }
 
 
@@ -26,13 +20,8 @@ export class Broadcaster {
     message:  OutboundMessage,
     presence: nkruntime.Presence,
   ): void {
-    this.dispatcher.broadcastMessage(
-      opCode,
-      this.nk.stringToBinary(MessageSerializer.encode(message)),
-      [presence],
-      true,
-      null,
-    );
+    const data = this.nk.stringToBinary(MessageSerializer.encode(message));
+    this.dispatcher.broadcastMessage(opCode, data, [presence], true, null);
   }
 
 

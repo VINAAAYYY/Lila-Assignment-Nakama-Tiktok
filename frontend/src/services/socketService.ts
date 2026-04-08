@@ -2,6 +2,7 @@ import { Socket } from "@heroiclabs/nakama-js";
 import nakamaService from "./nakamaService";
 import { MessageOpCode } from "../constants";
 import { ServerMessage } from "../types";
+import useAuthStore   from "../store/authStore";
 import useGameStore   from "../store/gameStore";
 import useMatchStore  from "../store/matchStore";
 
@@ -61,14 +62,15 @@ class SocketService {
       console.log("MATCHMAKER MATCHED, JOINING WITH TOKEN...");
       
       // Extract opponent info
-      const userId = require("../store/authStore").default.getState().userId;
+      const userId = useAuthStore.getState().userId;
       const opponent = matched.users.find(u => u.presence.user_id !== userId);
       if (opponent) {
         console.log("OPPONENT FOUND:", opponent.presence.username);
         useMatchStore.getState().setOpponent(opponent.presence.user_id, opponent.presence.username);
       }
 
-      const match = await socket.joinMatch(undefined, matched.token);
+      const matchId = matched.match_id ?? "";
+      const match = await socket.joinMatch(matchId, matched.token);
       console.log("JOINED MATCH:", match.match_id);
       useMatchStore.getState().setMatchId(match.match_id);
     };
@@ -79,7 +81,9 @@ class SocketService {
       
       try {
         // Safe decoding for React Native/Hermes (alternatives to TextDecoder)
-        const jsonString = String.fromCharCode.apply(null, Array.from(data.data));
+        // Explicitly wrap in Uint8Array to ensure Array.from works correctly
+        const bytes = new Uint8Array(data.data);
+        const jsonString = String.fromCharCode.apply(null, Array.from(bytes));
         const message = JSON.parse(jsonString) as ServerMessage;
 
         console.log(`MATCH DATA [Op ${opCode}]:`, JSON.stringify(message, null, 2));
@@ -92,6 +96,7 @@ class SocketService {
         }
       } catch (err) {
         console.error("FAILED TO DECODE OR PARSE MATCH DATA:", err);
+        console.error("RAW DATA TYPE:", typeof data.data);
       }
     };
 
@@ -104,7 +109,10 @@ class SocketService {
   private handleGameStart: MessageHandler = (msg) => {
     if (msg.type !== "game_start") return;
     console.log("CLIENT: PROCESSING GAME START...");
-    useGameStore.getState().startGame(msg);
+    
+    // Resolve userId from authStore properly
+    const userId = useAuthStore.getState().userId ?? "";
+    useGameStore.getState().startGame(msg, userId);
   };
 
   private handleBoardUpdate: MessageHandler = (msg) => {

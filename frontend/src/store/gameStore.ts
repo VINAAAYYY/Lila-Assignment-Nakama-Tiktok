@@ -18,7 +18,7 @@ interface GameState {
   mode:         GameMode;
   turnDeadline: number;
 
-  startGame:   (msg: GameStartMessage) => void;
+  startGame:   (msg: GameStartMessage, userId: string) => void;
   updateBoard: (msg: BoardUpdateMessage) => void;
   endGame:     (msg: GameOverMessage) => void;
   reset:       () => void;
@@ -37,11 +37,8 @@ const useGameStore = create<GameState>((set, get) => ({
   mode:         GameMode.Classic,
   turnDeadline: 0,
 
-  startGame: (msg) => {
+  startGame: (msg, userId: string) => {
     console.log("STORE: STARTING GAME", msg.marks);
-    // Determine our own mark from the auth store
-    // imported lazily to avoid circular dependency
-    const userId = require("./authStore").default.getState().userId ?? "";
     set({
       board:        msg.board,
       marks:        msg.marks,

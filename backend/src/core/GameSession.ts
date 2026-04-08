@@ -31,6 +31,7 @@ export class GameSession {
   private _winner: string | null = null;
   private _draw:   boolean       = false;
   private _over:   boolean       = false;
+  private _startSyncTrigger: boolean = false;
 
   readonly players: Map<string, nkruntime.Presence> = new Map();
   readonly marks:   Map<string, PlayerMark>          = new Map();
@@ -73,6 +74,7 @@ export class GameSession {
     session._winner = raw.winner;
     session._draw   = raw.draw;
     session._over   = raw.gameOver;
+    session._startSyncTrigger = raw.startSyncTrigger ?? false;
 
     return session;
   }
@@ -174,11 +176,20 @@ export class GameSession {
   get turn():          string        { return this._turn;   }
   get winner():        string | null { return this._winner; }
   get isOver():        boolean       { return this._over;   }
+  get startSyncTrigger(): boolean    { return this._startSyncTrigger; }
   get deadline():      number        { return this.timer.getDeadline(); }
   get boardSnapshot(): PlayerMark[]  { return this.board.snapshot(); }
 
   marksRecord(): Record<string, PlayerMark> {
     return Object.fromEntries(this.marks);
+  }
+
+  triggerStartSync(): void {
+    this._startSyncTrigger = true;
+  }
+
+  clearStartSync(): void {
+    this._startSyncTrigger = false;
   }
 
   toMatchState(): MatchState {
@@ -192,6 +203,7 @@ export class GameSession {
       gameOver:     this._over,
       mode:         this.mode,
       turnDeadline: this.timer.getDeadline(),
+      startSyncTrigger: this._startSyncTrigger,
     };
   }
 

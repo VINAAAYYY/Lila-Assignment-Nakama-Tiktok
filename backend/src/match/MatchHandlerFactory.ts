@@ -27,7 +27,7 @@ export class MatchHandlerFactory {
         MatchHandler.leave(ctx, logger, nk, dispatcher, tick, state, presences, cfg, storage, analytics),
 
       matchLoop: (ctx, logger, nk, dispatcher, tick, state, messages) =>
-        MatchHandler.loop(ctx, logger, nk, dispatcher, tick, state, messages, cfg, storage, analytics) ?? { state },
+        MatchHandler.loop(ctx, logger, nk, dispatcher, tick, state, messages, cfg, storage, analytics),
 
       matchTerminate: (ctx, logger, nk, dispatcher, tick, state, graceSeconds) =>
         MatchHandler.terminate(ctx, logger, nk, dispatcher, tick, state, graceSeconds),

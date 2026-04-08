@@ -86,22 +86,9 @@ export class MatchHandler {
       log.info("Match started firstTurn=%s", firstId);
       broadcaster.updateLabel({ mode: session.mode, open: false } satisfies MatchLabel);
       
-      const startMsg = {
-        type:         "game_start" as const,
-        board:        session.boardSnapshot,
-        marks:        session.marksRecord(),
-        turn:         session.turn,
-        mode:         session.mode,
-        turnDeadline: session.deadline,
-      };
-
-      // Broadcast to all (includes existing players)
-      broadcaster.toAll(MessageOpCode.GameStart, startMsg);
-      
-      // Explicitly send to newcomers because they might not be part of the broadcast list yet
-      for (const p of presences) {
-        broadcaster.toOne(MessageOpCode.GameStart, startMsg, p);
-      }
+      // Instead of broadcasting now, trigger sync in the next loop tick
+      // to avoid race condition where newcomers haven't finished join handshake
+      session.triggerStartSync();
     }
 
     return { state: session.toMatchState() };
@@ -169,6 +156,20 @@ export class MatchHandler {
     const log         = new Logger(logger, "MatchHandler.loop");
     const broadcaster = new Broadcaster(nk, disp);
     const session     = GameSession.fromSnapshot(rawState, cfg);
+
+    // Check for delayed GameStart sync trigger
+    if (session.startSyncTrigger) {
+      log.info("Processing delayed GameStart sync...");
+      broadcaster.toAll(MessageOpCode.GameStart, {
+        type:         "game_start",
+        board:        session.boardSnapshot,
+        marks:        session.marksRecord(),
+        turn:         session.turn,
+        mode:         session.mode,
+        turnDeadline: session.deadline,
+      });
+      session.clearStartSync();
+    }
 
 
     const timeout = session.checkTimeout();

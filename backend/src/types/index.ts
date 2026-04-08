@@ -37,6 +37,7 @@ export interface MatchState {
   gameOver:     boolean;
   mode:         GameMode;
   turnDeadline: number;
+  startSyncTrigger?: boolean;
 }
 
 

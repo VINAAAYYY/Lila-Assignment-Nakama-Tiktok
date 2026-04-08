@@ -8,7 +8,8 @@ class LeaderboardService {
       "get_leaderboard",
       {},
     );
-    return (result.payload as LeaderboardEntry[]) ?? [];
+    const payload = typeof result.payload === 'string' ? result.payload : JSON.stringify(result.payload);
+    return JSON.parse(payload ?? "[]") as LeaderboardEntry[];
   }
 
   async getMyStats(): Promise<{ wins: number; rank: number | null }> {
@@ -17,7 +18,8 @@ class LeaderboardService {
       "get_my_stats",
       {},
     );
-    return (result.payload as any) ?? { wins: 0, rank: null };
+    const payload = typeof result.payload === 'string' ? result.payload : JSON.stringify(result.payload);
+    return JSON.parse(payload ?? '{"wins":0,"rank":null}');
   }
 }
 

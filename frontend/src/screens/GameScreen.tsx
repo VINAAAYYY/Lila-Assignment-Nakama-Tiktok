@@ -22,7 +22,7 @@ export default function GameScreen({ navigation }: Props) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
   // Robust turn check: Server might send either userId or "X"/"O" as the turn
-  const isMyTurn = turn === userId || (myMark && turn === myMark);
+  const isMyTurn = turn === userId;
 
   // Navigate to GameOver when server says game ended
   useEffect(() => {
